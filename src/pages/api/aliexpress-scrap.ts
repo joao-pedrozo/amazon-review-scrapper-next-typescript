@@ -3,27 +3,35 @@ import puppeteer, { Frame, Page } from "puppeteer";
 
 async function bypassCaptcha(iframe: Frame, page: Page) {
   iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
+    const slidebtn = await iframe.$(".btn_slide");
+    console.log("slidebtn=>", slidebtn?.boundingBox());
+    slidebtn?.boundingBox();
+    const spanInfo = await slidebtn?.boundingBox();
+
     const sliderElement = await iframe.$(".slidetounlock");
     const slider = await sliderElement!.boundingBox();
 
-    const sliderHandle = await iframe.$(".btn_slide");
+    const sliderHandle = await iframe.$(".nc_iconfont.btn_slide");
     const handle = await sliderHandle!.boundingBox();
+
+    sliderHandle!.focus();
 
     await page.mouse.move(
       handle!.x + handle!.width / 2,
       handle!.y + handle!.height / 2
     );
+    await page.waitForTimeout(1000);
     await page.mouse.down();
     await page.mouse.move(
       handle!.x + slider!.width,
       handle!.y + handle!.height / 2,
-      { steps: 50 }
+      { steps: 20 }
     );
     await page.mouse.up();
 
-    await page.waitForNavigation({
-      waitUntil: "load",
-    });
+    await page.waitForTimeout(3000);
+
+    await page.mouse.up();
 
     console.log("bypassed");
   });
@@ -35,17 +43,42 @@ export default async function handler(
 ) {
   const browser = await puppeteer.launch({
     headless: false,
-    defaultViewport: { width: 1366, height: 768 },
+    defaultViewport: null,
   });
   const page = await browser.newPage();
 
+  // Necessary for captcha validation
+  await page.evaluate(() => {
+    Object.defineProperties(navigator, { webdriver: { get: () => false } });
+  });
+
+  // Necessary for captcha validation
   await page.evaluateOnNewDocument(() => {
-    Object.defineProperty(navigator, "webdriver", {
-      get: () => false,
+    Object.defineProperty(navigator, "plugins", {
+      get: () => [1, 2, 3, 4],
     });
   });
 
-  await page.goto("https://pt.aliexpress.com/item/1005003860281880.html");
+  // Necessary for captcha validation
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"
+  );
+
+  // Necessary for captcha validation
+  await page.evaluate(() => {
+    window.navigator.chrome = { runtime: {} };
+  });
+
+  // Necessary for captcha validation
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "plugins", {
+      get: () => [1, 2, 3],
+    });
+  });
+
+  await page.goto("https://pt.aliexpress.com/item/1005003860281880.html", {
+    waitUntil: "networkidle2",
+  });
 
   const el = await page.$(".product-reviewer-reviews");
   await el?.click();
@@ -55,9 +88,11 @@ export default async function handler(
   const reviewsIframeElement = await page.$("#product-evaluation");
   const iframe = await reviewsIframeElement?.contentFrame();
 
-  await iframe?.waitForSelector(".feedback-item").catch(async () => {
-    await bypassCaptcha(iframe, page);
-  });
+  await iframe
+    ?.waitForSelector(".feedback-item", { timeout: 2000 })
+    .catch(async () => {
+      await bypassCaptcha(iframe, page);
+    });
 
   const printReviews = async (reviewsPage = 1) => {
     await iframe?.$(".ui-pagination-next").then(async (button) => {
@@ -66,33 +101,13 @@ export default async function handler(
         await iframe.waitForTimeout(2000);
       }
 
-      await iframe.waitForSelector(".feedback-item").catch(() => {
-        iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
-          const sliderElement = await iframe.$(".slidetounlock");
-          const slider = await sliderElement!.boundingBox();
-
-          const sliderHandle = await iframe.$(".btn_slide");
-          const handle = await sliderHandle!.boundingBox();
-
-          await page.mouse.move(
-            handle!.x + handle!.width / 2,
-            handle!.y + handle!.height / 2
-          );
-          await page.mouse.down();
-          await page.mouse.move(
-            handle!.x + slider!.width,
-            handle!.y + handle!.height / 2,
-            { steps: 50 }
-          );
-          await page.mouse.up();
-
-          await page.waitForNavigation({
-            waitUntil: "load",
+      await iframe
+        .waitForSelector(".feedback-item", { timeout: 2000 })
+        .catch(() => {
+          iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
+            await bypassCaptcha(iframe, page);
           });
-
-          console.log("aqui");
         });
-      });
       const elements = await iframe.$$eval(".feedback-item", (nodes) => {
         const widthToRating = {
           "100%": 5,
