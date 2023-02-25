@@ -1,6 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import puppeteer, { Frame, Page } from "puppeteer";
 
+interface Review {
+  rating: number;
+  description: string | null;
+  images: string[];
+}
+
 async function bypassCaptcha(iframe: Frame, page: Page) {
   iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
     const slidebtn = await iframe.$(".btn_slide");
@@ -65,9 +71,9 @@ export default async function handler(
   );
 
   // Necessary for captcha validation
-  await page.evaluate(() => {
-    window.navigator.chrome = { runtime: {} };
-  });
+  // await page.evaluate(() => {
+  //   window.navigator.chrome = { runtime: {} };
+  // });
 
   // Necessary for captcha validation
   await page.evaluate(() => {
@@ -76,9 +82,14 @@ export default async function handler(
     });
   });
 
-  await page.goto("https://pt.aliexpress.com/item/1005003860281880.html", {
+  // await page.goto("https://pt.aliexpress.com/item/1005003860281880.html", {
+  //   waitUntil: "networkidle2",
+  // });
+  await page.goto("https://pt.aliexpress.com/item/1005004894817371.html", {
     waitUntil: "networkidle2",
   });
+
+  let reviews: Review[] = [];
 
   const el = await page.$(".product-reviewer-reviews");
   await el?.click();
@@ -95,19 +106,20 @@ export default async function handler(
     });
 
   const printReviews = async (reviewsPage = 1) => {
+    console.log(reviewsPage);
+
     await iframe?.$(".ui-pagination-next").then(async (button) => {
       if (reviewsPage > 1) {
         await button?.evaluate((b) => (b as HTMLElement).click());
-        await iframe.waitForTimeout(2000);
+        await iframe.waitForTimeout(3000);
       }
 
-      await iframe
-        .waitForSelector(".feedback-item", { timeout: 2000 })
-        .catch(() => {
-          iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
-            await bypassCaptcha(iframe, page);
-          });
-        });
+      await iframe.waitForSelector(".feedback-item").catch(() => {
+        console.log(123);
+        // iframe.waitForSelector("#nocaptcha").then(async (captcha) => {
+        //   await bypassCaptcha(iframe, page);
+        // });
+      });
       const elements = await iframe.$$eval(".feedback-item", (nodes) => {
         const widthToRating = {
           "100%": 5,
@@ -127,17 +139,18 @@ export default async function handler(
               ).style.width as keyof typeof widthToRating
             ];
 
-          const description = node.querySelector(
-            ".fb-main .f-content dl dt span"
-          )!.textContent;
+          const description =
+            node.querySelector(".fb-main .f-content dl dt span")?.textContent ||
+            null;
 
-          const imageNodes: NodeListOf<Element> = node.querySelectorAll(
-            ".fb-main .f-content dl dd ul li"
-          );
+          const imageNodes: NodeListOf<Element> =
+            node.querySelectorAll(".fb-main .f-content dl dd ul li") || [];
 
-          const imagesUrls = Array.from(imageNodes).map((imageNode) => {
-            return imageNode.querySelector("img")!.getAttribute("src");
-          });
+          const imagesUrls = Array.from(imageNodes)
+            .map((imageNode) => {
+              return imageNode.querySelector("img")?.getAttribute("src");
+            })
+            .filter((url) => url) as string[];
 
           return {
             rating,
@@ -147,11 +160,24 @@ export default async function handler(
         });
       });
 
-      printReviews(reviewsPage + 1);
+      reviews = [...reviews, ...elements];
+
+      // Verify with puppeteer if there is a .ui-pagination-next.ui-pagination-disabled element
+      const isLastPage = await iframe?.$(
+        ".ui-pagination-next.ui-pagination-disabled"
+      );
+
+      if (isLastPage) {
+        return;
+      }
+
+      await printReviews(reviewsPage + 1);
     });
   };
 
-  printReviews();
+  await printReviews();
 
-  return res.status(200).json({ name: "John Doe" });
+  await browser.close();
+
+  return res.status(200).json({ reviews });
 }
