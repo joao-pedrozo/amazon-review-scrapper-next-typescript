@@ -6,10 +6,16 @@ const Home: NextPage = () => {
   return (
     <div>
       <button
-        className="bg-red-500 p-64"
+        className="bg-red-500 p-16"
         onClick={() => fetch("/api/aliexpress-scrap")}
       >
-        oi
+        Aliexpress
+      </button>
+      <button
+        className="bg-red-500 p-16"
+        onClick={() => fetch("/api/amazon-scrap")}
+      >
+        Amazon
       </button>
     </div>
   );
