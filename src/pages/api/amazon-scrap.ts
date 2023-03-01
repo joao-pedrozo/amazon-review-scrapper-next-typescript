@@ -63,69 +63,6 @@ export default async function handler(
     return pageReviews;
   });
 
-  await page.click(".a-pagination .a-last");
-
-  await page.waitForSelector("input[type=email]", {
-    visible: true,
-    timeout: 3000,
-  });
-
-  // Login
-
-  await page.type("input[type=email]", process.env.AMAZON_EMAIL as string, {
-    delay: 150,
-  });
-
-  await page.click("#continue");
-
-  await page.waitForSelector("input[type=password]", {
-    visible: true,
-    timeout: 3000,
-  });
-
-  await page.type(
-    "input[type=password]",
-    process.env.AMAZON_PASSWORD as string,
-    {
-      delay: 150,
-    }
-  );
-
-  await page.click("#signInSubmit");
-
-  await page.waitForNavigation();
-
-  const reviews2 = await page.evaluate(() => {
-    const pageReviews: Review[] = [];
-
-    document
-      .querySelectorAll(".a-section.review.aok-relative")
-      .forEach((review) => {
-        const rating = review.querySelectorAll(".a-link-normal")[0]
-          ?.textContent as string;
-        const description = review.querySelector<HTMLElement>(
-          ".review-data.a-spacing-small"
-        )?.innerText as string;
-
-        pageReviews.push({ rating, description });
-      });
-
-    return pageReviews;
-  });
-
-  console.log(reviews2);
-
-  // await page.waitForSelector("#auth-account-fixup-phone-form", {
-  //  visible: true,
-  //  timeout: 3000,
-  // });
-
-  //const [skipPhone] = await page.$x("//a[contains(text(), 'Not now')]");
-
-  // if (skipPhone) {
-  // await skipPhone.click();
-  // }
-
   // await browser.close();
 
   return res.status(200).json({ reviews });
