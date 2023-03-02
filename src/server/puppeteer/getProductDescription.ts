@@ -30,7 +30,7 @@ const getProductDescription = async (page: Page, browser: Browser) => {
       (title) => title.textContent as string
     );
 
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: {
         description: descriptionInnerText,
         amazonURL: page.url(),
@@ -54,7 +54,7 @@ const getProductDescription = async (page: Page, browser: Browser) => {
       },
     });
 
-    await getProductPageBestReviews(page, browser);
+    await getProductPageBestReviews(page, browser, product.id);
   } catch (err) {
     await selectAndOpenDepartament(browser, page);
   }
