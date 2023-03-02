@@ -1,5 +1,8 @@
 import { type Browser, type Page } from "puppeteer";
 import selectAndOpenDepartament from "./selectAndOpenDepartament";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const clearAmazonURL = (string: string) =>
   string
@@ -38,8 +41,13 @@ const getProductPageBestReviews = async (
     document
       .querySelectorAll(".a-section.review.aok-relative")
       .forEach((review) => {
-        const rating = review.querySelectorAll(".a-link-normal")[0]
-          ?.textContent as string;
+        const rating = Array.from(
+          review.querySelectorAll(".a-link-normal")
+        ).find(
+          (review) =>
+            review.textContent?.includes("stars") ||
+            review.textContent?.includes("estrela")
+        )?.textContent as string;
         const description = review.querySelector<HTMLElement>(
           ".review-data.a-spacing-small"
         )?.innerText as string;
@@ -48,6 +56,20 @@ const getProductPageBestReviews = async (
       });
 
     return pageReviews;
+  });
+
+  await prisma.product.update({
+    where: {
+      id: productId,
+    },
+    data: {
+      reviews: {
+        create: reviews.map((review) => ({
+          content: review.description,
+          rating: parseInt(review.rating),
+        })),
+      },
+    },
   });
 
   await selectAndOpenDepartament(browser, page);

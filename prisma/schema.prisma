@@ -18,7 +18,8 @@ model Product {
   updatedAt DateTime @updatedAt
   breadCrumbCategory BreadCrumbCategory @relation(fields: [breadCrumbCategoryId], references: [id])
   breadCrumbCategoryId Int
-  amazonURL String
+  amazonURL String  @unique
+  amazonASIN String @unique
   reviews   Review[]
   aboutProductTopics AboutProductTopics[]
 }
@@ -26,6 +27,7 @@ model Product {
 model Review {
   id        Int      @id @default(autoincrement())
   rating    Int
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   product   Product  @relation(fields: [productId], references: [id])

@@ -14,7 +14,9 @@ export default async function handler(
     },
   });
 
-  await selectAndOpenDepartament(browser);
+  Array.from({ length: 10 }).forEach(async () => {
+    await selectAndOpenDepartament(browser);
+  });
 
   return res.status(200).json({ asd: "" });
 }

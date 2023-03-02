@@ -21,14 +21,36 @@ const getProductDescription = async (page: Page, browser: Browser) => {
 
   try {
     const descriptionInnerText = await page.$eval(
-      "[data-feature-name=productDescription]",
+      "#aplus_feature_div",
       (description) => (description as HTMLElement).innerText
     );
 
+    if (!descriptionInnerText) {
+      throw new Error("No description found on URL " + page.url());
+    }
+
     const breadCrumbCategory = await page.$eval(
       "#wayfinding-breadcrumbs_feature_div",
-      (title) => title.textContent as string
+      (title) => (title as HTMLElement).innerText as string
     );
+
+    if (!breadCrumbCategory) {
+      throw new Error("No breadCrumbCategory found on URL " + page.url());
+    }
+
+    const title = await page.$eval(
+      "#productTitle",
+      (title) => title.textContent!.replace(/\s+/g, " ").trim() as string
+    );
+
+    const productAsin = await page.$eval(
+      "#productDetails_detailBullets_sections1",
+      (asin) => asin.querySelector("td")?.innerText as string
+    );
+
+    if (!productAsin) {
+      throw new Error("No productAsin found on URL " + page.url());
+    }
 
     const product = await prisma.product.create({
       data: {
@@ -37,10 +59,8 @@ const getProductDescription = async (page: Page, browser: Browser) => {
         aboutProductTopics: {
           create: topics.map((topic) => ({ name: topic })),
         },
-        name: await page.$eval(
-          "#productTitle",
-          (title) => title.textContent as string
-        ),
+        amazonASIN: productAsin,
+        name: title,
         breadCrumbCategory: {
           connectOrCreate: {
             where: {
@@ -56,6 +76,12 @@ const getProductDescription = async (page: Page, browser: Browser) => {
 
     await getProductPageBestReviews(page, browser, product.id);
   } catch (err) {
+    console.log(err);
+    await prisma.product.deleteMany({
+      where: {
+        amazonURL: page.url(),
+      },
+    });
     await selectAndOpenDepartament(browser, page);
   }
 };

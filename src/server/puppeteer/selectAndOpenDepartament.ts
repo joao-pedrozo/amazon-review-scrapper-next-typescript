@@ -51,12 +51,21 @@ const selectAndOpenDepartament = async (
   // We are doing this because of headless mode
 
   if (!previousPage) {
-    page = (await browser.pages())[0]!;
+    // page = (await browser.pages())[0]!;
+    page = await browser.newPage();
+
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (request.resourceType() === "image") request.abort();
+      else request.continue();
+    });
   } else {
     page = previousPage;
   }
 
   await page.goto("https://www.amazon.com/Best-Sellers/zgbs");
+
+  console.log(1111111);
 
   const randomIndex = Math.floor(Math.random() * departaments.length);
   const randomDepartament = departaments[randomIndex] as string;
