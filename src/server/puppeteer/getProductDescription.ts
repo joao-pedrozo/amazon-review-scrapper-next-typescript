@@ -7,19 +7,19 @@ import selectAndOpenDepartament from "./selectAndOpenDepartament";
 const prisma = new PrismaClient();
 
 const getProductDescription = async (page: Page, browser: Browser) => {
-  const aboutThisItemTopics = await page.$$("#feature-bullets li");
-  const topics = await Promise.all(
-    aboutThisItemTopics.map(async (topic) => {
-      const text = (await page.evaluate(
-        (topic) => topic.textContent,
-        topic
-      )) as string;
-
-      return text;
-    })
-  );
-
   try {
+    const aboutThisItemTopics = await page.$$("#feature-bullets li");
+    const topics = await Promise.all(
+      aboutThisItemTopics.map(async (topic) => {
+        const text = (await page.evaluate(
+          (topic) => topic.textContent,
+          topic
+        )) as string;
+
+        return text;
+      })
+    );
+
     const descriptionInnerText = await page.$eval(
       "#aplus_feature_div",
       (description) => (description as HTMLElement).innerText

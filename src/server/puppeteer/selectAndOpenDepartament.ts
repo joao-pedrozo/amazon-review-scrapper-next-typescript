@@ -1,5 +1,6 @@
 import { type Page, type Browser, type ElementHandle } from "puppeteer";
 import getProductDescription from "./getProductDescription";
+import { PrismaClient } from "@prisma/client";
 
 const departaments = [
   "Appliances",
@@ -42,6 +43,16 @@ async function autoScroll(page: Page) {
   });
 }
 
+const filterAsync = async <T>(
+  arr: T[],
+  predicate: (item: T) => Promise<boolean>
+): Promise<T[]> => {
+  const results = await Promise.all(arr.map(predicate));
+  return arr.filter((_, index) => results[index]);
+};
+
+const prisma = new PrismaClient();
+
 const selectAndOpenDepartament = async (
   browser: Browser,
   previousPage?: Page
@@ -65,8 +76,6 @@ const selectAndOpenDepartament = async (
 
   await page.goto("https://www.amazon.com/Best-Sellers/zgbs");
 
-  console.log(1111111);
-
   const randomIndex = Math.floor(Math.random() * departaments.length);
   const randomDepartament = departaments[randomIndex] as string;
 
@@ -82,30 +91,53 @@ const selectAndOpenDepartament = async (
 
   await autoScroll(page);
 
-  await page.evaluate(() => {
-    const MINIMUM_AMOUNT_OF_REVIEWS = 10.0;
-    const productsWithEnoughReviews: Element[] = [];
+  const productsWithEnoughReviews = await filterAsync(
+    await page.$$("#gridItemRoot"),
+    async (product) => {
+      const MINIMUM_AMOUNT_OF_REVIEWS = 10000;
 
-    document.querySelectorAll("#gridItemRoot").forEach((review) => {
-      const amountOfReviews = Number(
-        review
-          .querySelector(".a-row .a-size-small")
-          ?.textContent?.replace(",", "")
+      const reviewsAmountElement = await product.$(
+        ".a-link-normal .a-size-small"
       );
 
-      if (amountOfReviews >= MINIMUM_AMOUNT_OF_REVIEWS) {
-        productsWithEnoughReviews.push(review);
-      }
-    });
+      const reviewsAmount = Number(
+        await reviewsAmountElement?.evaluate((node) =>
+          node.textContent?.replace(",", "")
+        )
+      );
 
-    const randomProductIndex = Math.floor(
-      Math.random() * productsWithEnoughReviews.length
-    );
+      return reviewsAmount >= MINIMUM_AMOUNT_OF_REVIEWS;
+    }
+  );
 
-    const randomProduct = productsWithEnoughReviews[randomProductIndex];
+  const productsNotAlreadyScraped = await filterAsync(
+    productsWithEnoughReviews,
+    async (product) => {
+      const productName = await product.evaluate(
+        (node) =>
+          node
+            .querySelectorAll<HTMLElement>(".a-link-normal")[1]
+            ?.innerText?.replace(/\s+/g, " ")
+            .trim() as string
+      );
 
-    randomProduct?.querySelector("a")?.click();
-  });
+      const productAlreadyScraped = await prisma.product.findFirst({
+        where: {
+          name: productName,
+        },
+      });
+
+      return !productAlreadyScraped;
+    }
+  );
+
+  const randomProductIndex = Math.floor(
+    Math.random() * productsNotAlreadyScraped.length
+  );
+
+  const randomProduct = productsNotAlreadyScraped[randomProductIndex];
+
+  await randomProduct?.click();
 
   await page.waitForNavigation();
 
