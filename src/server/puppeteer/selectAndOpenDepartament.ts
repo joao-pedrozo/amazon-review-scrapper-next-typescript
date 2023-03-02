@@ -46,11 +46,14 @@ const selectAndOpenDepartament = async (
   browser: Browser,
   previousPage?: Page
 ) => {
-  // We are doing this because of headless mode
-  const [page] = await browser.pages();
+  let page: Page;
 
-  if (!page) {
-    return;
+  // We are doing this because of headless mode
+
+  if (!previousPage) {
+    page = (await browser.pages())[0]!;
+  } else {
+    page = previousPage;
   }
 
   await page.goto("https://www.amazon.com/Best-Sellers/zgbs");

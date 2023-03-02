@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const Home: NextPage = () => {
   return (
-    <div>
+    <div className="flex items-center justify-around">
       <button
         className="bg-red-500 p-16"
         onClick={() => fetch("/api/aliexpress-scrap")}

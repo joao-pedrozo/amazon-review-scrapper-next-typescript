@@ -25,7 +25,11 @@ interface Review {
   description: string;
 }
 
-const getProductPageBestReviews = async (page: Page, browser: Browser) => {
+const getProductPageBestReviews = async (
+  page: Page,
+  browser: Browser,
+  productId: number
+) => {
   await page.goto(getPositiveOnlyReviewsURL(clearAmazonURL(page.url())));
 
   const reviews = await page.evaluate(() => {

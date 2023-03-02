@@ -4,7 +4,7 @@
 // Entra no produto
 // Pega a descrição dele com innerText
 // Entra no site reviews
-// Pega as reviews
+// Pega as reviews - Pegar breadcrumb com categoria do produto - Pegar nome do produto
 
 Appliances
 Amazon Devices & Accessories
