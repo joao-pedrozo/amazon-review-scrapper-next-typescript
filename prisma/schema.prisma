@@ -22,6 +22,7 @@ model Product {
   amazonASIN String @unique
   reviews   Review[]
   aboutProductTopics AboutProductTopics[]
+  AIDescription String?
 }
 
 model Review {
