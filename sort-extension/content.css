@@ -1,0 +1,15 @@
+.sort-by-review-count {
+    font-size: 13px;
+    background: #00aae8;
+    border-color: #abc9d4 #68a1b7 #1b83a9;
+    color: #fff;
+    border-radius: 3px;
+    border-width: 1px;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none! important;
+    vertical-align: middle;
+    margin-left: 11px;
+    padding: 3px 5px;
+}

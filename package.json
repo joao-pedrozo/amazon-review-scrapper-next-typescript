@@ -18,6 +18,7 @@
     "fs": "^0.0.1-security",
     "next": "13.1.6",
     "openai": "^3.2.1",
+    "path": "^0.12.7",
     "prisma-client": "^0.0.0",
     "puppeteer": "^19.7.2",
     "react": "18.2.0",

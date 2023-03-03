@@ -1,0 +1,26 @@
+{
+   "background": {
+      "persistent": false,
+      "scripts": [ "common.js", "background.js" ]
+   },
+   "browser_action": {
+      "default_icon": "icon48.png"
+   },
+   "content_scripts": [ {
+      "css": [ "content.css" ],
+      "js": [ "common.js", "content.js" ],
+      "matches": [ "*://*.amazon.ae/*", "*://*.amazon.at/*", "*://*.amazon.ca/*", "*://*.amazon.cn/*", "*://*.amazon.co.jp/*", "*://*.amazon.co.uk/*", "*://*.amazon.com.au/*", "*://*.amazon.com.br/*", "*://*.amazon.com.mx/*", "*://*.amazon.com.sg/*", "*://*.amazon.com.tr/*", "*://*.amazon.com/*", "*://*.amazon.de/*", "*://*.amazon.es/*", "*://*.amazon.fr/*", "*://*.amazon.ie/*", "*://*.amazon.in/*", "*://*.amazon.it/*", "*://*.amazon.nl/*" ]
+   } ],
+   "description": "Sort By Review Count for Amazon sorts product search results by most reviewed.",
+   "icons": {
+      "128": "icon128.png",
+      "16": "icon48.png",
+      "48": "icon48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3RPhwF28Vc17IyCBZ7kwMPIL7bA0G+AGGF9+Z4OmD6cnkaaeeml80G0chFWxonsgyN+Px+X1T10PkUvzvwKL/I9tvALluz1ouX4TW/YNNq2O4t4Mmb/iXrpbR7D9RYMUzmTkOZ+gdhHMyI5eRr12zyqvugyHdUH3prRzzv/FKlWUVgJIQELqKEg5ziyBHnrxGZNdtwebdebDZv1SfyHtROZEdr4Ywvmtqn4mU04AY3Lbb4vykB5U5jpRxZJDelec7FNDFTEsbbdsx7knhfA6WUsAqacvkDYNFDGP5abGrZHxIhNd4FyyTznnqkH8YP2BykjF5eh9zldv3vIwB+qpWwIDAQAB",
+   "manifest_version": 2,
+   "name": "Sort By Review Count for Amazon",
+   "permissions": [ "activeTab", "*://*.amazon.ae/*", "*://*.amazon.at/*", "*://*.amazon.ca/*", "*://*.amazon.cn/*", "*://*.amazon.co.jp/*", "*://*.amazon.co.uk/*", "*://*.amazon.com.au/*", "*://*.amazon.com.br/*", "*://*.amazon.com.mx/*", "*://*.amazon.com.sg/*", "*://*.amazon.com.tr/*", "*://*.amazon.com/*", "*://*.amazon.de/*", "*://*.amazon.es/*", "*://*.amazon.fr/*", "*://*.amazon.ie/*", "*://*.amazon.in/*", "*://*.amazon.it/*", "*://*.amazon.nl/*" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "3.0"
+}

@@ -13,9 +13,9 @@ const Home: NextPage = () => {
       </button>
       <button
         className="bg-red-500 p-16"
-        onClick={() => fetch("/api/generate-json")}
+        onClick={() => fetch("/api/scrap-with-extension")}
       >
-        JSON
+        Extension
       </button>
       <button
         className="bg-red-500 p-16"
