@@ -1,6 +1,7 @@
 import { type Browser, type Page } from "puppeteer";
 import selectAndOpenDepartament from "./selectAndOpenDepartament";
 import { PrismaClient } from "@prisma/client";
+import getProductDescription from "./getProductDescription";
 
 const prisma = new PrismaClient();
 
@@ -31,7 +32,8 @@ interface Review {
 const getProductPageBestReviews = async (
   page: Page,
   browser: Browser,
-  productId: number
+  productId: number,
+  linkToScrapeId: number
 ) => {
   await page.goto(getPositiveOnlyReviewsURL(clearAmazonURL(page.url())));
 
@@ -72,7 +74,33 @@ const getProductPageBestReviews = async (
     },
   });
 
-  await selectAndOpenDepartament(browser, page);
+  await prisma.linkToScrap.update({
+    where: {
+      id: linkToScrapeId,
+    },
+    data: {
+      scrapped: true,
+      success: true,
+    },
+  });
+
+  const nextLink = await prisma.linkToScrap.findFirst({
+    where: {
+      scrapped: false,
+    },
+  });
+
+  await page.goto(nextLink?.url!);
+
+  getProductDescription(page, browser, nextLink?.id!).catch(async (err) => {
+    const nextLink = await prisma.linkToScrap.findFirst({
+      where: {
+        scrapped: false,
+      },
+    });
+
+    getProductDescription(page, browser, nextLink?.id!);
+  });
 };
 
 export default getProductPageBestReviews;

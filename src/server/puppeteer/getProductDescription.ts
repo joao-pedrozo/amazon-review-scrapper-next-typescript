@@ -6,7 +6,11 @@ import selectAndOpenDepartament from "./selectAndOpenDepartament";
 
 const prisma = new PrismaClient();
 
-const getProductDescription = async (page: Page, browser: Browser) => {
+const getProductDescription = async (
+  page: Page,
+  browser: Browser,
+  linkToScrapeId: number
+) => {
   try {
     const aboutThisItemTopics = await page.$$("#feature-bullets li");
     const topics = await Promise.all(
@@ -55,7 +59,12 @@ const getProductDescription = async (page: Page, browser: Browser) => {
     const product = await prisma.product.create({
       data: {
         description: descriptionInnerText,
-        amazonURL: page.url(),
+        amazonURL: page
+          .url()
+          .split("/")
+          .slice(0, 6)
+          .join("/")
+          .split("?")[0] as string,
         aboutProductTopics: {
           create: topics.map((topic) => ({ name: topic })),
         },
@@ -74,15 +83,37 @@ const getProductDescription = async (page: Page, browser: Browser) => {
       },
     });
 
-    await getProductPageBestReviews(page, browser, product.id);
+    getProductPageBestReviews(page, browser, product.id, linkToScrapeId);
   } catch (err) {
-    console.log(err);
-    await prisma.product.deleteMany({
+    await prisma.linkToScrap.update({
       where: {
-        amazonURL: page.url(),
+        id: linkToScrapeId,
+      },
+      data: {
+        scrapped: true,
+        success: false,
       },
     });
-    await selectAndOpenDepartament(browser, page);
+
+    const nextLink = await prisma.linkToScrap.findFirst({
+      where: {
+        scrapped: false,
+      },
+    });
+
+    console.log(nextLink);
+
+    await page.goto(nextLink?.url!);
+
+    getProductDescription(page, browser, nextLink?.id!).catch(async (err) => {
+      const nextLink = await prisma.linkToScrap.findFirst({
+        where: {
+          scrapped: false,
+        },
+      });
+
+      getProductDescription(page, browser, nextLink?.id!);
+    });
   }
 };
 

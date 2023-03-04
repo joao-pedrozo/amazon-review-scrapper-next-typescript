@@ -26,7 +26,10 @@ export default async function handler(
             try {
               const linkToScrap = await prisma.linkToScrap.create({
                 data: {
-                  url: amazonLink.Link,
+                  url: amazonLink.Link.split("/")
+                    .slice(0, 6)
+                    .join("/")
+                    .split("?")[0] as string,
                   departament: {
                     connectOrCreate: {
                       create: {
